@@ -1,0 +1,186 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Stop! Allah is Watching</title>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; background: #111; color: #eee; padding: 20px; margin: 0; }
+    h1 { color: #ff4444; font-size: 1.5em; }
+    .ayah { margin: 15px 0; padding: 10px; background: #222; border-radius: 8px; font-size: 1em; line-height: 1.5em; }
+    .tasks { margin-top: 20px; font-size: 1em; background: #333; padding: 15px; border-radius: 8px; }
+    button { margin: 10px; padding: 10px 20px; font-size: 1em; border-radius: 5px; border: none; cursor: pointer; }
+    .ar { font-size: 1.2em; display: block; margin-bottom: 6px; color: #00ffcc; }
+    .tr { font-style: italic; display: block; margin-bottom: 6px; }
+    #langToggle { position: fixed; top: 10px; left: 10px; padding: 6px 12px; background: #444; color: #fff; border: none; cursor: pointer; border-radius: 5px; font-size: 0.9em; }
+    .dhikr { margin-top: 15px; background: #222; padding: 10px; border-radius: 8px; font-size: 1em; text-align: left; }
+    ul { list-style-type: none; padding: 0; }
+    li { margin: 8px 0; }
+    @media (max-width: 600px) {
+      body { font-size: 0.9em; padding: 10px; }
+      h1 { font-size: 1.2em; }
+      button { font-size: 0.9em; padding: 8px 15px; }
+    }
+  </style>
+</head>
+<body>
+
+  <button id="langToggle" onclick="toggleLang()">Switch to English</button>
+  <h1 id="title">🚫 Стоп! Аллах наблюдает за тобой</h1>
+
+  <div id="verses"></div>
+
+  <div class="tasks">
+    <p><b id="exerciseTitle">Упражнения:</b></p>
+    <ul id="exerciseList"></ul>
+
+    <div class="dhikr">
+      <p><b id="dhikrTitle">Зикр:</b></p>
+      <ul id="dhikrList"></ul>
+    </div>
+
+    <button id="doneBtn" onclick="markDone()">✅ Сделано</button>
+    <button id="helpBtn" onclick="increase()">❌ Не помогло?</button>
+  </div>
+
+<script>
+  let attempt = 0;
+  let currentLang = "ru"; // default Russian
+
+  const verseSets = {
+    "ru": [
+      [
+        {ar: "أَلَمْ يَعْلَمْ بِأَنَّ اللَّهَ يَرَىٰ (96:14)", tr: "Разве он не знает, что Аллах видит? (Коран 96:14)"},
+        {ar: "قُل لِّلْمُؤْمِنِينَ يَغُضُّوا مِنْ أَبْصَارِهِمْ (24:30)", tr: "Скажи верующим мужчинам, чтобы они опускали свои взоры. (Коран 24:30)"},
+        {ar: "إِنَّ الصَّلَاةَ تَنْهَىٰ عَنِ الْفَحْشَاءِ وَالْمُنكَرِ (29:45)", tr: "Поистине, молитва удерживает от мерзости и порицаемого. (Коран 29:45)"}
+      ],
+      [
+        {ar: "إِنَّ رَبَّكَ لَبِالْمِرْصَادِ (89:14)", tr: "Поистине, твой Господь в засаде(наблюдает). (Коран 89:14)"},
+        {ar: "وَاللَّهُ بِمَا تَعْمَلُونَ بَصِيرٌ (3:156)", tr: "Аллах видит то, что вы делаете. (Коран 3:156)"},
+        {ar: "وَمَا اللَّهُ بِغَافِلٍ عَمَّا تَعْمَلُونَ (2:85)", tr: "Аллах никогда не бывает невнимателен к тому, что вы делаете. (Коран 2:85)"}
+      ]
+    ],
+    "en": [
+      [
+        {ar: "أَلَمْ يَعْلَمْ بِأَنَّ اللَّهَ يَرَىٰ (96:14)", tr: "Does he not know that Allah sees? (Quran 96:14)"},
+        {ar: "قُل لِّلْمُؤْمِنِينَ يَغُضُّوا مِنْ أَبْصَارِهِمْ (24:30)", tr: "Tell the believing men to lower their gaze. (Quran 24:30)"},
+        {ar: "إِنَّ الصَّلَاةَ تَنْهَىٰ عَنِ الْفَحْشَاءِ وَالْمُنكَرِ (29:45)", tr: "Indeed, the prayer restrains from shameful and unjust deeds. (Quran 29:45)"}
+      ],
+      [
+        {ar: "إِنَّ رَبَّكَ لَبِالْمِرْصَادِ (89:14)", tr: "Indeed, your Lord is ever watchful. (Quran 89:14)"},
+        {ar: "وَاللَّهُ بِمَا تَعْمَلُونَ بَصِيرٌ (3:156)", tr: "And Allah is All-Seeing of what you do. (Quran 3:156)"},
+        {ar: "وَمَا اللَّهُ بِغَافِلٍ عَمَّا تَعْمَلُونَ (2:85)", tr: "And Allah is never unaware of what you do. (Quran 2:85)"}
+      ]
+    ]
+  };
+
+  const exercises = {
+    "ru": [
+      "10 Отжиманий",
+      "10 секунд Прыжки-звёздочка",
+      "15 Приседаний",
+      "20 секунд Планка",
+      "10 Бёрпи",
+      "15 Подъёмов корпуса",
+      "10 Выпадов на каждую ногу",
+      "30 секунд Стул у стены",
+      "20 Высоких подниманий коленей",
+      "20 Альпинистов"
+    ],
+    "en": [
+      "10 Pushups",
+      "10s Star Jumps",
+      "15 Squats",
+      "20s Plank",
+      "10 Burpees",
+      "15 Sit-ups",
+      "10 Lunges per leg",
+      "30s Wall Sit",
+      "20 High Knees",
+      "20 Mountain Climbers"
+    ]
+  };
+
+  const dhikrs = [
+    {arabic: "يَا حَيُّ يَا قَيُّومُ، بِرَحْمَتِكَ أَسْتَغِيثُ...", translit: "Ya Hayyu Ya Qayyum, bi-rahmatika astaghith, aslihli sha-ni kullahu wa laa takilni ila nafsi torfata a'yn", en: "O Ever-Living, O Sustainer, by Your mercy I seek rescue...", ru: "О Живой, О Поддерживающий! Милостью Твоей я ищу помощи, исправь все мои дела и не оставляй меня моему нафсу даже на миг", count: 100},
+    {arabic: "أَسْتَغْفِرُ اللَّهَ", translit: "Astaghfirullah", en: "I seek forgiveness from Allah", ru: "Прошу прощения у Аллаха", count: 200},
+    {arabic: "لَا إِلٰهَ إِلَّا الله", translit: "La ilaha illa Allah", en: "There is no god but Allah", ru: "Нет божества, кроме Аллаха", count: 300},
+    {arabic: "سُبْحَانَ اللَّهِ وَبِحَمْدِهِ", translit: "SubhanAllahi wa bihamdihi", en: "Glory be to Allah and praise be to Him", ru: "Преславен Аллах и хвала Ему", count: 400},
+    {arabic: "اللَّهُمَّ صَلِّ عَلَىٰ مُحَمَّدٍ", translit: "Allahumma salli ‘ala Muhammad", en: "O Allah, send blessings upon Muhammad", ru: "О Аллах, ниспошли благословения на Мухаммада", count: 500}
+  ];
+
+  function loadVerses() {
+    let set = verseSets[currentLang][attempt % verseSets[currentLang].length];
+    document.getElementById("verses").innerHTML = set.map(v => `
+      <div class="ayah">
+        <span class="ar">${v.ar}</span>
+        <span class="tr">${v.tr}</span>
+      </div>`).join("");
+  }
+
+  function loadExercises() {
+    let out = "";
+    for (let i = 0; i <= attempt && i < exercises[currentLang].length; i++) {
+      out += `<li>${exercises[currentLang][i]}</li>`;
+    }
+    document.getElementById("exerciseList").innerHTML = out;
+  }
+
+  function loadDhikr() {
+    let out = "";
+    for (let i = 0; i <= attempt && i < dhikrs.length; i++) {
+      let d = dhikrs[i];
+      out += `<li><div class="ar">${d.arabic}</div>
+        <div class="tr">${d.translit}</div>
+        <div>${currentLang === "en" ? d.en : d.ru}</div>
+        <div><b>${d.count}x</b></div></li>`;
+    }
+    document.getElementById("dhikrList").innerHTML = out;
+  }
+
+  function increase() {
+    attempt++;
+    loadVerses();
+    loadExercises();
+    loadDhikr();
+  }
+
+  function markDone() {
+    if (currentLang === "en") {
+      alert("Alhamdulillah! Stay strong, Allah is with you.");
+    } else {
+      alert("Альхамдулиллях! Будь силен, Аллах с тобой.");
+    }
+  }
+
+  function toggleLang() {
+    if (currentLang === "ru") {
+      currentLang = "en";
+      document.getElementById("langToggle").innerText = "Переключить на русский";
+      document.getElementById("title").innerText = "🚫 Stop! Allah is Watching You";
+      document.getElementById("exerciseTitle").innerText = "Exercises:";
+      document.getElementById("dhikrTitle").innerText = "Dhikr:";
+      document.getElementById("doneBtn").innerText = "✅ Done";
+      document.getElementById("helpBtn").innerText = "❌ Did not help?";
+    } else {
+      currentLang = "ru";
+      document.getElementById("langToggle").innerText = "Switch to English";
+      document.getElementById("title").innerText = "🚫 Стоп! Аллах наблюдает за тобой";
+      document.getElementById("exerciseTitle").innerText = "Упражнения:";
+      document.getElementById("dhikrTitle").innerText = "Зикр:";
+      document.getElementById("doneBtn").innerText = "✅ Сделано";
+      document.getElementById("helpBtn").innerText = "❌ Не помогло?";
+    }
+    loadVerses();
+    loadExercises();
+    loadDhikr();
+  }
+
+  // Load initial
+  loadVerses();
+  loadExercises();
+  loadDhikr();
+</script>
+
+</body>
+</html>
